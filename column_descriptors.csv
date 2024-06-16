@@ -1,0 +1,46 @@
+﻿data_set_name,column_num,column_header,column_descrption,possible_values
+links,1,resource,"Unique identifier for each resource including  node number, node name, and life stage code",[number]_[name]_[lifestage]
+links,2,resourceNum,Unique number corresponding to node number column in nodes.csv,
+links,3,resourceName,Name indicating taxonomic or common name identity of resource,
+links,4,resourceCat,Taxonomic grouping corresponding to most commonly used groupings (e.g. Polychaete). Common names used if appropriate (e.g. Birds).,
+links,5,resourceStage,Numeric code for life stage category,"(0) non-living, (1) adult, spore, medusa, (2) egg, (3) 1st stage larvae: L1-L3 nematode in crustacean; parthenitae, copepodid, nauplius larva, acanthella or cystacanth in arthropod, juvenile isopod/amphipod; cysticercoid/ procercoid, larval fish, larval insect, (4) 2nd stage larvae: cystacanth in non-arthropod, cestode plerocercoid, cercaria, metacestode in non-arthropod, chalimus, juvenile fish/snail/crab, cypris larva (barnacle), zoea, (5) metacercaria, L3+ or paratenic nematode (not in crustacean), polyp stage in cnidarians, juvenile barnacle, megalops, (6) multiple stages (as in dicyemids)"
+links,6,consumer,"Unique identifier for each consumer including  node number, node name, and life stage code",[number]_[name]_[lifestage]
+links,7,consumerNum,Unique number corresponding to node number column in nodes.csv,
+links,8,consumerName,Name indicating taxonomic or common name identity of consumer,"Most often Genus species, but can also be any taxonomic rank or categorical (common name) descriptor"
+links,9,consumerCat,Taxonomic grouping corresponding to most commonly used groupings (e.g. Polychaete). Common names used if appropriate (e.g. Birds).,
+links,10,consumerStage,Numeric code for life stage category,"(0) non-living, (1) adult, spore, medusa, (2) egg, (3) 1st stage larvae: L1-L3 nematode in crustacean; parthenitae, copepodid, nauplius larva, acanthella or cystacanth in arthropod, juvenile isopod/amphipod; cysticercoid/ procercoid, larval fish, larval insect, (4) 2nd stage larvae: cystacanth in non-arthropod, cestode plerocercoid, cercaria, metacestode in non-arthropod, chalimus, juvenile fish/snail/crab, cypris larva (barnacle), zoea, (5) metacercaria, L3+ or paratenic nematode (not in crustacean), polyp stage in cnidarians, juvenile barnacle, megalops, (6) multiple stages (as in dicyemids)"
+links,11,interactionType,"Code indicating interaction type, after framework of Lafferty and Kuris 2002. (1) predation, (3) micropredation/grazing, (4) parasitic castration,(5) pathogen, (6) endoparasite, (7) ectoparasite, (8) parasitoid, (12) trophically transmitted parasite, (14) concomittant predation, (16) predation on free-living non-feeding stage, (19) parasite intraguild antagonism, (23) symbiotic egg predation, (24) facultative parasitism, (25) ecto- or endosymbiotic kleptoparasitism, (26) hyperparasitism, (27) sessile micropredation without host switching, (28) boring, (30) scavenging",
+links,12,referenceNum,Number pertaining to reference or references listed in references.csv that contain evidence justifying link inclusion,See references.csv
+links,13,justification,Code indicating best possible justification for link inclusion,"(1) personal observation, (2) in LTER, PISCO, or MARINe surveys, (3) in literature, including books and theses/dissertations, (4) inferred via shared habitat and general diet category or trophic strategy, (6) more broadly in the literature (e.g. group or higher taxonomy listed but not specific species), (7) expert opinion or personal communication, (9) close relative observed personally, (10) inferred based on close relatives in literature, (13) interaction listed in GLOBI"
+links,14,confidence,Numerical code identifying certainty category,"(1) very certain, (2) certain, (3) somewhat certain, (4) uncertain but plausible, (5) certain on interaction but uncertain on interaction type"
+links,15,localities,"Specific geographic locations where this interaction has been observed or reported, if available. Locations associated with references of species observation. Does not encompass all known localities of species. ",
+links,16,interactionZone,rocky intertidal zone as defined in Ricketts (1985) where the interaction is most likely to take place; defers to the habitat of the most habitat-specific interactor (e.g. a sea star eating a barnacle is likely to eat that barnacle in the middle to low intertidal even if the barnacle exists up to the high intertidal),"high, middle, low, very low"
+links,17,habitat,habitat that the interaction is most likely to take place in; defers to the habitat of the most habitat-specific interactor (e.g. a fish eating a crab will only occur in pools even if the crab can occupy both pools and exposed surfaces),"pools, exposed, or both"
+links,18,parasitic,indicates whether the interaction is parasitic or not,"(y) Yes, (n) No"
+nodes,1,node,"Unique identifier for each node including node number, node name, and life stage code",
+nodes,2,nodeNum,Unique numeric identifier,
+nodes,3,nodeName,Name indicating taxonomic or common name identity of consumer,"Most commonly full scientific name, Genus species"
+nodes,4,synonymies,"Previously used Latin taxonomy, if available",
+nodes,5,category,Taxonomic grouping corresponding to most commonly used groupings (e.g. Polychaete). Common names used if appropriate (e.g. Birds).,
+nodes,6,common_name,Common name for the species if available. Not a unique identifier.,
+nodes,7,life_stage,"Node life-cycle stage, specific to type of organism. ","Adult, spore, egg, acanthella, copepodid, juvenile, larvae, nymph, parthenitae, procercoid, chalimus, cystacanth, metacestode, L3, metacercaria, multiple, or dead (for detritus)"
+nodes,8,life_stage_code,Numeric code for life stage category,"(0) non-living, (1) adult, spore, medusa, (2) egg, (3) 1st stage larvae: L1-L3 nematode in crustacean; parthenitae, copepodid, nauplius larva, acanthella or cystacanth in arthropod, juvenile isopod/amphipod; cysticercoid/ procercoid, larval fish, larval insect, (4) 2nd stage larvae: cystacanth in non-arthropod, cestode plerocercoid, cercaria, metacestode in non-arthropod, chalimus, juvenile fish/snail/crab, cypris larva (barnacle), zoea, (5) metacercaria, L3+ or paratenic nematode (not in crustacean), polyp stage in cnidarians, juvenile barnacle, megalops, (6) multiple stages (as in dicyemids)"
+nodes,9,province,Eastern Pacific ocean provincial range of node,"Californian (species ranging from Point Conception, CA, USA to at least Baja California, Mexico), Oregonian (species whose southern range limit is Point Conception, CA, USA), Both (species which ranged from at least North of San Francisco Bay to at least Baja California, Mexico), or unknown"
+nodes,10,commonality,Commonality of node,"abundant, very common, common, present, uncommon (rare nodes were excluded)"
+nodes,11,reference,References that listed the presence of node at least in the Eastern Pacific ocean intertidal areas,"Numeric code that corresponds to references.csv, PO (personal observation), or name of expert observer"
+nodes,12,zone,rocky intertidal zone as defined in Ricketts (1985),"high, middle, low, very low"
+nodes,13,habitat_notes,"notes on the habitat of the node, as available",
+nodes,14,grouping_habits,Grouping habits of organism,"solitary, colonial (asexual reproduction leading to aggregated clones often with physical connection, as in sponges or colonial tunicates), or aggregating (non-clonal grouping habits without physical connection)"
+nodes,15,mobility,Organism mobility,"mobile, sessile, host-dependent, passive"
+nodes,16,trophic_strategy,Best description of trophic habits of node,"primary producer, non-feeding, detritivore, deposit feeder, grazer, filter feeder, carnivore (scavenger + predator), scavenger, typical predator, micropredator, pathogen, parasite, parasitoid, parasitic castrator, unknown"
+nodes,17,node_type,"Whether or not node is represents a taxonomic grouping, a life stage, or a non-taxonomic group","taxonomic, life stage, common name"
+nodes,18,node_resolution,Taxonomic resolution of node.,"subspecies, species, genus, family, order, class, phylum, kingdom, assemblage (non-taxonomic)"
+nodes,19,aphia,Unique taxonomic identifier corresponding to entry in World Register of Marine Species as of June 2024.,
+nodes,20,kingdom,Kingdom according to World Register of Marine Species as of June 2024.,
+nodes,21,phylum,Phylum according to World Register of Marine Species as of June 2024.,
+nodes,22,class,Class according to World Register of Marine Species as of June 2024.,
+nodes,23,order,Order according to World Register of Marine Species as of June 2024.,
+nodes,24,family,Family according to World Register of Marine Species as of June 2024.,
+nodes,25,genus,Genus according to World Register of Marine Species as of June 2024.,
+references,1,reference_number,unique identifier for each reference as referred to in ref_num column in  links.csv and nodes.csv,
+references,2,reference,full citation for each reference in APA format,
