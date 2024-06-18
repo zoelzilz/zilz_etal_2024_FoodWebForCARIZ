@@ -1,0 +1,84 @@
+---
+title: "Example Code to Subset California RIZ Food Web"
+output: html_document
+date: "2024-06-18"
+---
+
+## In Zilz **et al** (2024) we suggest that the California rocky intertidal food web might be subsetted for comparison of subwebs or to answer particular ecological questions. Here, we provide easy to use examples of how to subset the web by a couple of parameters.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# required packages
+require(tidyverse)
+require(cheddar)
+require(igraph)
+
+# import the link and node data
+nodes <- read_csv("data/nodes.csv")
+links <- read_csv("data/links.csv")
+
+```
+
+## One potential analysis of the food web might be to compare the properties of the web with and without parasites. This is easily achievable by filtering parasites out of the node list and using that to subset the web.
+```{r filter parasites from node list and links}
+
+########### filter parasites out to create new node list ########### 
+nodes_nopsites <- nodes %>% 
+  filter(parasite == "n")
+
+###########  subset the web using this new node list ########### 
+# we only want consumers/resource links in the web if those consumers/resources are in our clean node list
+# we can do this in five steps
+
+#1. create a "keep" list of consumers
+consumers_keep <- nodes_nopsites %>% 
+  dplyr::select(node) %>%  # we only need the unique identifier, "node", for matching
+  rename(consumer = node) # the unique identifier of consumers in the link list is "consumer", and these colnames must match
+
+#2. create a version of the link list that only has links with consumers in our "keep" list, e.g. free living organisms only
+consumer_keep_links <- inner_join(consumers_keep, links, by = join_by(consumer)) # inner join keeps only rows in 'links' that match 'consumers_keep'
+  
+#3. create a "keep" list of resources (this is identical to our consumer keep list, we just need to change the column name)
+resources_keep <- consumers_keep %>% 
+  rename(resource = consumer) # the unique identifier of resources in the link list is "resource", and these colnames must match
+
+#4. use 'inner_join()' to create a link list from the consumer_keep_links list that ALSO only has resources from the keep list, e.g. free living organisms
+links_nopsites <- inner_join(resources_keep, consumer_keep_links, by = join_by(resource))
+
+```
+## We can also subset the web in the opposite direction, e.g. determining the types of *links* we want (instead of the types of nodes we want) and adjusting the node list to match
+It's important to note that in order for network analysis r packages like cheddar and igraph to run, all of the nodes must be present in the link list and vice versa
+
+### Let's assume we only want to see the food web links that we are 100% certain exist, e.g. have the highest possible confidence ranking: 1. We can easily subset the web to only include links with a confidence of 1 and then subset the nodes list to match.
+```{r subset links to highest confidence}
+
+############ filter out only links with a confidence of 1 = "Very Certain" ############ 
+best_web <- links %>% 
+  filter(confidence == 1)
+
+############ use these links to subset the node list ############ 
+
+# first pull out dataframe of just consumers present in "best_web"
+best_consumers <- best_web %>% 
+  select(consumer) %>% # we only need the unique identifier column for joining
+  rename(node = consumer) # column names need to match resources df when we stack later
+
+# then dataframe of just resources present in "best_web"
+best_resources <- best_web %>% 
+  dplyr::select(resource) %>% 
+  rename(node = resource) # column names need to match consumers df when we stack, up next
+
+# stack them with rbind
+best_node_ids <- rbind(best_resources, best_consumers) %>% 
+  distinct(node, .keep_all = TRUE) # this makes sure we don't have duplicates in the list
+  
+# got to this point in the code and realized that a lot of nodes in the edge list don't have id numbers even though they belong in the web, so leaving to manually fix those real quick
+# fixed and updated edge list to version .1
+
+# bind metadata and attributes from original nodes list
+best_nodes <- left_join(best_node_ids, nodes, by = join_by(node)) %>% 
+  filter(!is.na(nodeNum)) # NAs are generated when there is no match, this filters them out for a nice clean node list
+
+```
+
