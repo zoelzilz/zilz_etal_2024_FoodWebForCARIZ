@@ -1,0 +1,25 @@
+---
+title: "Visualization of California RIZ Food Web"
+output: html_document
+date: "2024-06-16"
+---
+
+```{r setup and required packages, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(tidyverse)
+require(cheddar)
+require(igraph)
+
+```
+
+# This markdown is designed to help you visualize the food web for the California rocky intertidal zone. One of the outputs will be identical to the food web figure (Figure 1) from Zilz **et al** (2024).
+
+```{r load the node and link data}
+
+nodes <- read_csv("data/nodes.csv")
+
+links <- read_csv("data/links.csv")
+
+```
+

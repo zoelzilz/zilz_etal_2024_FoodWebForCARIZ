@@ -27,7 +27,7 @@ nodes,7,life_stage,"Node life-cycle stage, specific to type of organism. ","Adul
 nodes,8,life_stage_code,Numeric code for life stage category,"(0) non-living, (1) adult, spore, medusa, (2) egg, (3) 1st stage larvae: L1-L3 nematode in crustacean; parthenitae, copepodid, nauplius larva, acanthella or cystacanth in arthropod, juvenile isopod/amphipod; cysticercoid/ procercoid, larval fish, larval insect, (4) 2nd stage larvae: cystacanth in non-arthropod, cestode plerocercoid, cercaria, metacestode in non-arthropod, chalimus, juvenile fish/snail/crab, cypris larva (barnacle), zoea, (5) metacercaria, L3+ or paratenic nematode (not in crustacean), polyp stage in cnidarians, juvenile barnacle, megalops, (6) multiple stages (as in dicyemids)"
 nodes,9,province,Eastern Pacific ocean provincial range of node,"Californian (species ranging from Point Conception, CA, USA to at least Baja California, Mexico), Oregonian (species whose southern range limit is Point Conception, CA, USA), Both (species which ranged from at least North of San Francisco Bay to at least Baja California, Mexico), or unknown"
 nodes,10,commonality,Commonality of node,"abundant, very common, common, present, uncommon (rare nodes were excluded)"
-nodes,11,reference,References that listed the presence of node at least in the Eastern Pacific ocean intertidal areas,"Numeric code that corresponds to references.csv, PO (personal observation), or name of expert observer"
+nodes,11,reference,References that listed the presence of node at least in the Eastern Pacific ocean intertidal areas,"Numeric code that corresponds to references.csv, personal observation (PO), personal communication (pers. comm.), or name of (exp. test.) expert observer"
 nodes,12,zone,rocky intertidal zone as defined in Ricketts (1985),"high, middle, low, very low"
 nodes,13,habitat_notes,"notes on the habitat of the node, as available",
 nodes,14,grouping_habits,Grouping habits of organism,"solitary, colonial (asexual reproduction leading to aggregated clones often with physical connection, as in sponges or colonial tunicates), or aggregating (non-clonal grouping habits without physical connection)"
@@ -42,5 +42,6 @@ nodes,22,class,Class according to World Register of Marine Species as of June 20
 nodes,23,order,Order according to World Register of Marine Species as of June 2024.,
 nodes,24,family,Family according to World Register of Marine Species as of June 2024.,
 nodes,25,genus,Genus according to World Register of Marine Species as of June 2024.,
+nodes,26,parasite,"Denotes whether this organism has a trophic strategy that is considered parasitic (e.g. pathogen, typical parasite, parasitic castrator, symbiotic egg predator)","(y) Yes, (n) No"
 references,1,reference_number,unique identifier for each reference as referred to in ref_num column in  links.csv and nodes.csv,
 references,2,reference,full citation for each reference in APA format,
