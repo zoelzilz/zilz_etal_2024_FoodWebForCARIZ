@@ -15,6 +15,7 @@ require(igraph)
 
 # This markdown is designed to help you visualize the food web for the California rocky intertidal zone. One of the outputs will be identical to the food web figure (Figure 1) from Zilz **et al** (2024).
 
+## First we load the nodes and links from the /data folder
 ```{r load the node and link data}
 
 nodes <- read_csv("data/nodes.csv")
@@ -22,4 +23,222 @@ nodes <- read_csv("data/nodes.csv")
 links <- read_csv("data/links.csv")
 
 ```
+## In order to use the package 'cheddar' we need to transform the data slightly
+cheddar is very specific about data types and formats, requiring: 
+- a nodes dataframe with a 'node' column (character) and metadata about the nodes (but only recognizes a 'category' column if it has specific values, so we will need to rename our 'category' column) 
+- a links dataframe with a 'consumer' column and a 'resource' column and whatever metadata we want
+- a very simple properties dataframe with a list of specific food web properties and their units. Our food web doesn't have any body size or mass properties, so this dataframe will only include one column 
+```{r transform the data for cheddar}
 
+# nodes #
+cheddar_nodes <- nodes %>% 
+  rename(nodeCat = category, # cheddar requires a category column to include very specific values
+         functional.group = trophic_strategy # cheddar recognizes "functional group" but not trophic strategy
+         )
+
+# links #
+cheddar_links <- links %>% 
+  distinct(consumer, resource, .keep_all = TRUE) # cheddar can't handle duplicates so we need to get rid of them
+
+# properties #
+properties <- list(title = "California RIZ") # making a new dataframe, but our only 'property' is the title of the web
+
+```
+
+## Now that our data is in the right shape, we can create the cheddar 'community' or food web
+```{r generate cheddar community}
+
+# the Community() function creates a web object out of our nodes, links, and properties
+ca_riz_web <- Community(cheddar_nodes, # nodes first
+                        properties, # then pass the properties object
+                        trophic.links = cheddar_links) # and finally the links
+
+ca_riz_web # this will spit out the basic web properties, # nodes and # links
+
+```
+
+## Before creating the food web graph with igraph, we can use cheddar to generate some metrics commonly used for food web analysis, plus some of the basic metrics we included in Zilz **et al** (2024).
+```{r basic food web metrics}
+
+# top predators (incoming non-parasite links only)
+top <- FractionNonTopLevelNodes(ca_riz_web)
+
+# intermediate consumers
+int <- FractionIntermediateNodes(ca_riz_web)
+
+# primary producers or basal links
+basal <- FractionBasalNodes(ca_riz_web)
+
+# isolated nodes
+isolated <- FractionIsolatedNodes(ca_riz_web)
+IsolatedNodes(ca_riz_web) # if we want to see which nodes they are
+
+######## Below are the figures we generated for Zilz et al 2024 ########
+
+# all nodes that were resolved to species
+sp_nodes <- nodes %>% 
+  filter(node_resolution == "Species") %>% 
+  distinct(nodeName) %>% 
+  count()
+sp_nodes
+
+# parasite nodes (all life stages)
+pnodes <- nodes %>% 
+  filter(parasite == "y") %>% 
+  count()
+pnodes
+
+#parasite taxa (life stages 'collapsed')
+sp_pnodes <- nodes %>% 
+  #filter(node_resolution == "Species") %>% 
+  filter(parasite == "y") %>% 
+  distinct(nodeName) %>% 
+  count()
+sp_pnodes
+
+# free living nodes (all life stages)
+fnodes <- nodes %>% 
+  filter(parasite =="n") %>% 
+  count()
+fnodes
+
+# free living taxa (life stages 'collapsed')
+sp_fnodes <- nodes %>% 
+  filter(parasite == "n") %>% 
+  distinct(nodeName) %>% 
+  count()
+sp_fnodes
+
+# parasitic links
+plinks <- links %>% 
+  filter(parasitic == "y") %>% 
+  count()
+plinks
+
+```
+
+## In order to create a topographic food web figure, we need to calculate a couple more food web metrics, namely a trophic level for each node so they can be plotted on the y-axis according to their trophic position
+### cheddar gives us many options for this, but the fastest (computationally) is to use prey-averaged trophic level which takes the average trophic level of all of the node's resources and adds 1 (Williams & Martinez 2004) 
+```{r trophic levels}
+
+# calculate trophic levels for each node
+options(cheddarMaxQueue=0) # necessary because this is a very large web; this eliminates an upper limit on running trophic calculations
+trophic_levels <- PreyAveragedTrophicLevel(ca_riz_web) # create a vector that we can use later
+
+```
+
+## Now that we have all we need, we can switch to using 'igraph' to visualize the web
+### igraph also has some restrictions about how its data are set up, so we will manipulate our original dataframes yet again
+```{r creating igraph data}
+
+############# set up igraph dataframes ################
+
+# igraph requires that first two columns of link dataframe are "symbolic edge list"
+igraph_links <- cheddar_links %>% 
+  relocate(consumer, .after = resource) # need to make this from, to; so resource, consumer
+
+igraph_nodes <- cheddar_nodes %>% # the nodes can be in the same format
+  mutate(trophic_level = trophic_levels) # need to add the trophic levels on here that we calculated using cheddar
+```
+
+## Now we can create the igraph 'object' - which is somewhat analagous to the cheddar 'Community' - using 'igraph_from_data_frame()' 
+```{r}
+
+############# make igraph object ################
+
+ca_riz_igraph1 <- graph_from_data_frame(d= igraph_links, # all links
+                             vertices = igraph_nodes, # igraph filters out nodes that don't have any interactions automatically
+                             directed=T) # this makes sure resources (from) "point" to consumers (to)
+
+```
+
+
+## We also want to remove unconnected nodes still remaining in web
+### We can calculate one more metric, degree (number of links each node has), to remove these nodes
+Basically if degree = 0 then it has no connections in the web, so we will direct igraph to take it out
+```{r}
+
+# calculate degree and add it to nodes df:
+deg <- igraph::degree(ca_riz_igraph1, mode = "all") 
+
+igraph_nodes_1 <- igraph_nodes %>% 
+  mutate(degree = deg)
+
+# create a vector of isolated nodes
+isolated = which(igraph::degree(ca_riz_igraph1)==0)
+
+# use igraph's 'delete_vertices()' to remove nodes in that vector and create a new igraph object without them
+ca_riz_igraph = delete_vertices(ca_riz_igraph1, isolated)
+
+# back in the igraph_nodes dataframe, which has some metadata we need for plotting, we need to make the data frame the right length, so we need to remove unconnected nodes from igraph_nodes
+# a bit of a complicated process
+
+# first make the isolated igraph object into a dataframe and extract the node column
+isolated.df <- as.data.frame(isolated) %>% 
+  rownames_to_column("node")
+
+#then turn that column into a list called todelet
+todelete <- as.list(isolated.df$node)
+
+# then filter OUT any nodes that are in that list
+igraph_nodes2 <- igraph_nodes_1 %>% 
+  filter(!node %in% todelete) #phew we did it
+```
+
+## The next step is to create a custom igraph layout so we can control how our food web network appears using trophic levels
+### We will generate a matrix of coordinates that we will pass into igraph's 'layout' call when we plot
+```{r custom coordinate matrix}
+
+# make adjacency matrix for plotting using igraph
+RIZadjmatrix <- as_adjacency_matrix(ca_riz_igraph,
+                                    sparse = FALSE)
+
+############### create custom layout using trophic levels ################
+# First we need to create a two-column matrix identifying the x and y values for each node.
+layout.matrix.1 <- matrix(nrow=length(V(ca_riz_igraph)), # Rows equal to the number of nodes (called V by igraph, for vertices)
+                        ncol=2) # two columns, one for each coordinate
+layout.matrix.1[,1] <- runif(length(V(ca_riz_igraph))) # column 1: randomly assign positions along x-axis (like jitter)
+layout.matrix.1[,2] <- igraph_nodes2$trophic_level # column 2: assign y axis position to tropic level value
+
+```
+
+## Now that we have a custom layout matrix, we should also set some colors for specific kinds of nodes
+### These can be anything, but we wanted the three types of basal nodes (primary producers, non-feeding organisms, and non-living material), consumers, and parasites all to be different colors
+### To assign colors, we have to insert them into the igraph object as follows:
+```{r colors}
+############### pre set some colors for plotting #################
+# node (V) colors:
+V(ca_riz_igraph)$color <- case_when(igraph_nodes2$parasite == "y" ~ "red",
+                                         igraph_nodes2$functional.group == "primary producer" ~ "green",
+                                         igraph_nodes2$functional.group == "mixotroph" ~ "green",
+                                         #igraph_nodes2$functional.group == "detritivore" ~ "brown",
+                                         #igraph_nodes2$functional.group == "deposit feeder" ~ "brown",
+                                         igraph_nodes2$functional.group == "non-feeding" ~ "gold",
+                                         igraph_nodes2$nodeName == "Bacteria" ~ "gold",
+                                         igraph_nodes2$nodeName == "UNKNOWN" ~ "gold",
+                                         igraph_nodes2$nodeCat == "dead stuff" ~ "tan",
+                                         TRUE ~ "blue")
+# edge (E) colors
+E(ca_riz_igraph)$color <- case_when(igraph_links$parasitic == "y" ~ "red",
+                                         igraph_links$parasitic == "n" ~ "blue",)
+
+# i like to add these to our igraph nodes dataframe so I can double check that the colors go where they should!
+igraph_nodes_colors <- igraph_nodes2 %>% 
+  mutate(colorz = V(ca_riz_igraph)$color)
+
+```
+
+
+## Finally we can make a nice topographic food web plot!
+
+```{r plotting}
+
+############## PLOT! #############
+rizvis <- plot.igraph(ca_riz_igraph,
+                      vertex.label = NA, # labels crowd the graph, so lets take them out
+                      vertex.frame.color = "white", # this makes the nodes pop
+                      vertex.size=3,
+                      edge.arrow.size=.25,
+                      layout=layout.matrix.1 # this is where we pass in our custom layout
+                     )
+```
