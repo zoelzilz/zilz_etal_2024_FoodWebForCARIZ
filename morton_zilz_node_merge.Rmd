@@ -1,0 +1,141 @@
+---
+title: "Combining Morton et al 2021 and Zilz et al 2024 Nodes"
+output: html_document
+date: "2024-09-17"
+---
+
+## In Zilz **et al**., (2024) we state that the California rocky intertidal food web can be merged with a food web for the Santa Barbara kelp forest (Morton **et al**., 2021) because the two webs share some taxa. We have generated some example code to unite the two node lists.
+
+#### Morton, D. N., Antonino, C. Y., Broughton, F. J., Dykman, L. N., Kuris, A. M., & Lafferty, K. D. (2021). A food web including parasites for kelp forests of the Santa Barbara Channel, California. Scientific Data, 8(1), 99. https://doi.org/10.1038/s41597-021-00880-4
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# required packages
+require(tidyverse)
+
+# import the RIZ node data
+riz <- read_csv("data/nodes.csv")
+
+# import the kelp forest node data
+kelp <- read_csv("data/morton2021_nodes.csv")
+
+# check out the differences between the two dataframes so we can plan our approach
+head(kelp)
+head(riz)
+
+```
+
+## There are some differences in the datasets, but they essentially contain the same information just with different column names
+### here's what we need to know
+ - kelp$Sp.name = riz$nodeTaxon, but in `kelp` the names are separated by "." instead of " "
+
+ - Taxonomic levels and ecological metadata have the same column names in both datasets but with some stylistic differences (e.g. snake case vs uppercase, separated by underscores instead of periods)
+ 
+ - life stage codes, justification codes, and confidence codes are the same in both datasets, with the same levels
+ 
+ - kelp$thermal.province = riz$province and thermal.province[cold] = province[N] while thermal.province[warm] = province[S]
+ 
+### We can transform `kelp` a little bit to merge with `riz`
+```{r transform kelp data}
+
+######## first we will rename some columns ######## 
+kelp_match_riz <- kelp %>% 
+  
+  # rename some columns, new riz col name on the left and old kelp col name on the right
+  rename(Morton_nodeNum = Node.ID, # we will need to retain this if we want to use the Morton et al links with our new merged dataset
+         nodeTaxon = Sp.name,
+         life_stage = Stage,
+         life_stage_code = stageID,
+         category = Organismal.Group,
+         common_name = WorkingName,
+         node_resolution = Resolution,
+         province = thermal.province,
+         habitat_notes = Habitat_Site,
+         consumer_type = Consumer.Type,
+         consumer_strategy = Consumer.Strategy,
+         mobility = Mobility,
+         reference = Ref.ID,
+         synonymies = Synonomy, 
+         phylum = Phylum,
+         order = Order, 
+         class = Class, 
+         family = Family,
+         genus = Genus
+         ) %>% 
+  
+  # fix some data in kelp columns, mainly province column and removing spaces in taxon column
+  mutate(province = case_when(province == "warm" ~ "S",
+                                      province == "cold" ~ "N",
+                                      TRUE ~ as.character(province))) %>% 
+  mutate(nodeTaxon = str_replace(nodeTaxon, "\\.", " ")) %>% # replaces the first period in each string with a space, leaving strings like "sp."
+  
+  # add some new columns with helpful data that we might or might not use
+  unite("taxon_stage", nodeTaxon, life_stage_code, sep = "_", remove = FALSE) %>%  # creating a taxon + lifestage ID that we will use to merge after the next step
+  mutate(zone = "kelp forest") %>% 
+  
+  # remove kelp columns we won't need down the line
+  select(taxon_stage, nodeTaxon, life_stage, life_stage_code, Morton_nodeNum, common_name, category, province, habitat_notes, zone, consumer_type, consumer_strategy, mobility, node_resolution, phylum, order, class, family, genus, reference)
+
+```
+
+### Now we can remove all metadata from `kelp` so it's not redundant when we merge with `riz`
+We will keep some helpful metadata like zone and Morton_nodeNum
+```{r parse down kelp to just list of species}
+
+kelp_merge <- kelp_match_riz %>% 
+  select(taxon_stage, # matches RIZ dataframe, for merging
+         zone, # says "this came from the kelp forest
+         Morton_nodeNum # so that we can use Dana's link data down the line
+         )
+
+```
+
+
+### Add a column to the RIZ dataset representing a combination of taxon and life stage code. We will use that column for merging
+```{r add merge col to riz}
+
+riz_merge <- riz %>% 
+  unite("taxon_stage", nodeTaxon, life_stage_code, sep = "_", remove = FALSE) # creating the same taxon + lifestage ID that we will use to merge in the next step
+
+```
+
+### borrowing a function written to combine the coalesce() and join() functions for our purposes from Edward Visel
+see here for details: https://alistaire.rbind.io/blog/coalescing-joins/
+```{r coalesce join function}
+coalesce_join <- function(x, y, 
+                          by = NULL, suffix = c(".x", ".y"), 
+                          join = dplyr::full_join, ...) {
+    joined <- join(x, y, by = by, suffix = suffix, ...)
+    # names of desired output
+    cols <- union(names(x), names(y))
+    
+    to_coalesce <- names(joined)[!names(joined) %in% cols]
+    suffix_used <- suffix[ifelse(endsWith(to_coalesce, suffix[1]), 1, 2)]
+    # remove suffixes and deduplicate
+    to_coalesce <- unique(substr(
+        to_coalesce, 
+        1, 
+        nchar(to_coalesce) - nchar(suffix_used)
+    ))
+    
+    coalesced <- purrr::map_dfc(to_coalesce, ~dplyr::coalesce(
+        joined[[paste0(.x, suffix[1])]], 
+        joined[[paste0(.x, suffix[2])]]
+    ))
+    names(coalesced) <- to_coalesce
+    
+    dplyr::bind_cols(joined, coalesced)[cols]
+}
+```
+
+ 
+### Once that's been done, we should be able to merge the datasets based on shared taxon names between the two
+```{r merge datasets}
+
+riz_with_kelp <- coalesce_join(riz_merge, kelp_match_riz, by = "taxon_stage")
+
+```
+
+### We now have a fully merged node list for both kelp forest and RIZ food webs! There is of course some missing metadata and MUCH more you could do to this dataset to build a fully inclusive near-shore marine food web for California, but we will leave it at that!

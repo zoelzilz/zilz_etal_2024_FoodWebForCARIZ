@@ -33,7 +33,7 @@ cheddar is very specific about data types and formats, requiring:
 # nodes #
 cheddar_nodes <- nodes %>% 
   rename(nodeCat = category, # cheddar requires a category column to include very specific values
-         functional.group = trophic_strategy # cheddar recognizes "functional group" but not trophic strategy
+         functional.group = consumer_strategy # cheddar recognizes "functional group" but not trophic strategy
          )
 
 # links #
@@ -78,7 +78,7 @@ IsolatedNodes(ca_riz_web) # if we want to see which nodes they are
 # all nodes that were resolved to species
 sp_nodes <- nodes %>% 
   filter(node_resolution == "Species") %>% 
-  distinct(nodeName) %>% 
+  distinct(nodeTaxon) %>% 
   count()
 sp_nodes
 
@@ -92,7 +92,7 @@ pnodes
 sp_pnodes <- nodes %>% 
   #filter(node_resolution == "Species") %>% 
   filter(parasite == "y") %>% 
-  distinct(nodeName) %>% 
+  distinct(nodeTaxon) %>% 
   count()
 sp_pnodes
 
@@ -105,7 +105,7 @@ fnodes
 # free living taxa (life stages 'collapsed')
 sp_fnodes <- nodes %>% 
   filter(parasite == "n") %>% 
-  distinct(nodeName) %>% 
+  distinct(nodeTaxon) %>% 
   count()
 sp_fnodes
 
@@ -208,19 +208,28 @@ layout.matrix.1[,2] <- igraph_nodes2$trophic_level # column 2: assign y axis pos
 ```{r colors}
 ############### pre set some colors for plotting #################
 # node (V) colors:
-V(ca_riz_igraph)$color <- case_when(igraph_nodes2$parasite == "y" ~ "red",
-                                         igraph_nodes2$functional.group == "primary producer" ~ "green",
-                                         igraph_nodes2$functional.group == "mixotroph" ~ "green",
-                                         #igraph_nodes2$functional.group == "detritivore" ~ "brown",
-                                         #igraph_nodes2$functional.group == "deposit feeder" ~ "brown",
-                                         igraph_nodes2$functional.group == "non-feeding" ~ "gold",
-                                         igraph_nodes2$nodeName == "Bacteria" ~ "gold",
-                                         igraph_nodes2$nodeName == "UNKNOWN" ~ "gold",
-                                         igraph_nodes2$nodeCat == "dead stuff" ~ "tan",
-                                         TRUE ~ "blue")
+V(ca_riz_igraph)$color <- case_when(igraph_nodes2$functional.group == "grazer" ~ "darkgreen",
+                           igraph_nodes2$functional.group == "micropredator" ~ "pink",
+                           igraph_nodes2$functional.group ==   "non-feeding" ~ "grey",
+                           igraph_nodes2$functional.group ==     "various (assemblage)" ~ "black",
+                           igraph_nodes2$functional.group ==     "detritivore" ~ "tan",
+                           igraph_nodes2$functional.group ==     "scavenger" ~ "tan",
+                           igraph_nodes2$functional.group ==     "deposit feeder" ~ "tan",
+                           igraph_nodes2$functional.group ==   "filter feeder" ~ "blue",
+                           igraph_nodes2$functional.group ==     "primary producer" ~ "limegreen",
+                           igraph_nodes2$functional.group ==     "mixotroph" ~ "limegreen",
+                           igraph_nodes2$functional.group ==     "omnivore" ~ "orange",
+                           igraph_nodes2$functional.group ==     "typical predator" ~ "purple",
+                           igraph_nodes2$functional.group ==     "carnivore (scavenger + predator)" ~ "purple",
+                           igraph_nodes2$functional.group ==     "parasite" ~ "red",
+                           igraph_nodes2$functional.group ==     "symbiotic egg predator" ~ "red",
+                           igraph_nodes2$functional.group ==     "endoparasite" ~ "red",
+                           igraph_nodes2$functional.group ==     "ectoparasite" ~ "red",
+                           igraph_nodes2$functional.group ==     "pathogen" ~ "red",
+                           igraph_nodes2$functional.group ==    "parasitic castrator" ~ "red",
+                           .default = "black")
 # edge (E) colors
-E(ca_riz_igraph)$color <- case_when(igraph_links$parasitic == "y" ~ "red",
-                                         igraph_links$parasitic == "n" ~ "blue",)
+E(ca_riz_igraph)$color <- head_of(ca_riz_igraph, E(ca_riz_igraph))$color
 
 # i like to add these to our igraph nodes dataframe so I can double check that the colors go where they should!
 igraph_nodes_colors <- igraph_nodes2 %>% 
@@ -235,10 +244,10 @@ igraph_nodes_colors <- igraph_nodes2 %>%
 
 ############## PLOT! #############
 rizvis <- plot.igraph(ca_riz_igraph,
-                      vertex.label = NA, # labels crowd the graph, so lets take them out
-                      vertex.frame.color = "white", # this makes the nodes pop
+                      vertex.label = NA,
+                      vertex.frame.color = NA,
                       vertex.size=3,
-                      edge.arrow.size=.25,
-                      layout=layout.matrix.1 # this is where we pass in our custom layout
+                      edge.arrow.size=0,
+                      layout=layout.matrix.1 
                      )
 ```
