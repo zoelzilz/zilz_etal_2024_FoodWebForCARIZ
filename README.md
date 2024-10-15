@@ -32,7 +32,7 @@ Email: smcameron.photography@gmail.com
  
 Name: Jaden E. Orli 
 Institution: University of California Santa Barbara, Department of Ecology, Evolution, and Marine Biology 
-Email: jorli@ucsb.edu 
+Email: jadenorli@gmail.com 
  
 C. Alternate Contact Information 
 Name: Armand Kuris 
